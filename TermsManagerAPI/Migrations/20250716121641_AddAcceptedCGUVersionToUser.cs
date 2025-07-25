@@ -5,7 +5,7 @@
 namespace TermsManagerAPI.Migrations
 {
     /// <inheritdoc />
-    public partial class AddLastCGUAcceptanceDateToUser : Migration
+    public partial class AddAcceptedCGUVersionToUser : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

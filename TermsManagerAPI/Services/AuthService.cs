@@ -1,9 +1,10 @@
 ﻿using CGUManagementAPI.Models;
-using CGUManagementAPI.Repositories;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using TermsManagerAPI.Repositories.Interface;
+using TermsManagerAPI.Services.Interface;
 
 namespace CGUManagementAPI.Services
 {
@@ -21,42 +22,13 @@ namespace CGUManagementAPI.Services
         public async Task<string> LoginAsync(string email, string password)
         {
             var user = await _userRepository.GetByEmailAsync(email);
-
             if (user == null)
                 throw new UnauthorizedAccessException("Utilisateur introuvable.");
 
-            bool passwordOk = BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
-
-            if (!passwordOk)
+            if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
                 throw new UnauthorizedAccessException("Mot de passe incorrect.");
 
             return await GenerateJWTAsync(user);
-        }
-
-        public Task<bool> ValidateTokenAsync(string token)
-        {
-            try
-            {
-                var tokenHandler = new JwtSecurityTokenHandler();
-                var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Key"] ?? "");
-
-                tokenHandler.ValidateToken(token, new TokenValidationParameters
-                {
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(key),
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidIssuer = _configuration["Jwt:Issuer"],
-                    ValidAudience = _configuration["Jwt:Audience"],
-                    ClockSkew = TimeSpan.Zero
-                }, out SecurityToken _);
-
-                return Task.FromResult(true);
-            }
-            catch
-            {
-                return Task.FromResult(false);
-            }
         }
 
         public Task<string> GenerateJWTAsync(User user)
@@ -79,17 +51,44 @@ namespace CGUManagementAPI.Services
                 Expires = DateTime.UtcNow.AddHours(24),
                 Issuer = issuer,
                 Audience = audience,
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256)
             };
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return Task.FromResult(tokenHandler.WriteToken(token));
         }
 
+        public Task<bool> ValidateTokenAsync(string token)
+        {
+            try
+            {
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Key"] ?? "");
+
+                tokenHandler.ValidateToken(token, new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidIssuer = _configuration["Jwt:Issuer"],
+                    ValidAudience = _configuration["Jwt:Audience"],
+                    ClockSkew = TimeSpan.Zero
+                }, out _);
+
+                return Task.FromResult(true);
+            }
+            catch
+            {
+                return Task.FromResult(false);
+            }
+        }
+
         public Task LogoutAsync()
         {
-            // Pour JWT : le "logout" se fait côté client (suppression du token local)
+            // Le logout est géré côté client en supprimant le token JWT
             return Task.CompletedTask;
         }
     }
 }
+                                                                                                                                    

@@ -4,6 +4,7 @@ using CGUManagementAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace TermsManagerAPI.Migrations
 {
     [DbContext(typeof(CGUManagementDbContext))]
-    partial class CGUManagementDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250717143612_AddAcceptedCGUIdToUser")]
+    partial class AddAcceptedCGUIdToUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

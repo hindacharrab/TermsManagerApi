@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace CGUManagementAPI.Models
 {
@@ -6,38 +7,39 @@ namespace CGUManagementAPI.Models
     {
         public int Id { get; set; }
 
-        [Required(ErrorMessage = "L'email est obligatoire")]
-        [EmailAddress(ErrorMessage = "Format d'email invalide")]
-        [MaxLength(255, ErrorMessage = "L'email ne peut pas dépasser 255 caractères")]
+        [Required, EmailAddress]
         public string Email { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Le mot de passe est obligatoire")]
-        [MaxLength(255, ErrorMessage = "Le hash du mot de passe ne peut pas dépasser 255 caractères")]
+        [Required]
         public string PasswordHash { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Le rôle est obligatoire")]
-        [MaxLength(50, ErrorMessage = "Le rôle ne peut pas dépasser 50 caractères")]
-        public string Role { get; set; } = "User"; // "User" ou "Admin"
+        [Required]
+        [RegularExpression("User|Admin", ErrorMessage = "Le rôle doit être 'User' ou 'Admin'")]
+        public string Role { get; set; } = "User";
 
-        [Required(ErrorMessage = "Le nom est obligatoire")]
-        [MaxLength(100, ErrorMessage = "Le nom ne peut pas dépasser 100 caractères")]
+        [Required]
         public string Nom { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Le prénom est obligatoire")]
-        [MaxLength(100, ErrorMessage = "Le prénom ne peut pas dépasser 100 caractères")]
+        [Required]
         public string Prenom { get; set; } = string.Empty;
 
         public DateTime DateCreation { get; set; } = DateTime.UtcNow;
 
-        public DateTime? LastCGUAcceptanceDate { get; set; } // null si jamais accepté
+        public DateTime? LastCGUAcceptanceDate { get; set; }
+        public string? AcceptedCGUVersion { get; set; }
 
-        // Propriété calculée pour obtenir le nom complet
+        // --- Propriétés calculées ---
+
         public string NomComplet => $"{Prenom} {Nom}";
+    
+        // Clé étrangère (nullable si l'utilisateur n'a jamais accepté)
+        public int? AcceptedCGUId { get; set; }
 
-        // Propriété pour vérifier si l'utilisateur est admin
-        public bool IsAdmin => Role.Equals("Admin", StringComparison.OrdinalIgnoreCase);
+        // Propriété de navigation vers la CGU acceptée
+        public CGU? AcceptedCGU { get; set; }
 
-        // Propriété pour vérifier si l'utilisateur a accepté les CGU
-        public bool HasAcceptedCGU => LastCGUAcceptanceDate.HasValue;
+
     }
+
+
 }

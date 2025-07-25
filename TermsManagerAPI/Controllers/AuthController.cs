@@ -1,9 +1,9 @@
 ﻿using CGUManagementAPI.Dtos;
 using CGUManagementAPI.Models;
-using CGUManagementAPI.Repositories;
-using CGUManagementAPI.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
+using TermsManagerAPI.Repositories.Interface;
+using TermsManagerAPI.Services.Interface;
 
 namespace CGUManagementAPI.Controllers
 {
@@ -35,41 +35,7 @@ namespace CGUManagementAPI.Controllers
             }
         }
 
-        // ✅ POST: api/auth/register
-        [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
-        {
-            var existingUser = await _userRepository.GetByEmailAsync(request.Email);
-            if (existingUser != null)
-            {
-                return Conflict(new { message = "Cet email est déjà utilisé." });
-            }
-
-            var user = new User
-            {
-                Email = request.Email,
-                Nom = request.Nom,
-                Prenom = request.Prenom,
-                Role = "User",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-                DateCreation = DateTime.UtcNow
-            };
-
-            var createdUser = await _userRepository.AddAsync(user);
-
-            return Ok(new
-            {
-                message = "Inscription réussie.",
-                user = new
-                {
-                    createdUser.Id,
-                    createdUser.Email,
-                    createdUser.Nom,
-                    createdUser.Prenom,
-                    createdUser.Role
-                }
-            });
-        }
+      
 
         // ✅ POST: api/auth/validate
         [HttpPost("validate")]

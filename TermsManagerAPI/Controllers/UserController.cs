@@ -1,79 +1,113 @@
-﻿using CGUManagementAPI.Models;
-using CGUManagementAPI.Repositories;
+﻿using CGUManagementAPI.Dtos;
+using CGUManagementAPI.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using TermsManagerAPI.Dtos;  // Assure-toi que ce namespace est correct
-using System;
-using System.Threading.Tasks;
+using TermsManagerAPI.Dtos;
+using TermsManagerAPI.Repositories.Interface;
+using TermsManagerAPI.Helpers; // ✅ Ajout pour accéder à UserHelper
+using System.Security.Claims;
+using AutoMapper;
 
 namespace CGUManagementAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class UserController : ControllerBase
     {
         private readonly IUserRepository _userRepository;
         private readonly ICGURepository _cguRepository;
+        private readonly IMapper _mapper;
 
-        public UserController(IUserRepository userRepository, ICGURepository cguRepository)
+        public UserController(IUserRepository userRepository, ICGURepository cguRepository, IMapper mapper)
         {
             _userRepository = userRepository;
             _cguRepository = cguRepository;
+            _mapper = mapper;
         }
 
-        // POST: api/user/{id}/accept-cgu
-        [HttpPost("{id}/accept-cgu")]
-        public async Task<IActionResult> AcceptCGU(int id)
+        // GET: api/user/me
+        [HttpGet("My Profile")]
+        public async Task<IActionResult> GetUserProfile()
         {
-            var user = await _userRepository.GetByIdAsync(id);
+            var userIdFromToken = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+
+            var user = await _userRepository.GetByIdAsync(userIdFromToken);
             if (user == null)
                 return NotFound(new { message = "Utilisateur introuvable." });
 
             var latestCGU = await _cguRepository.GetLatestVersionAsync();
-            if (latestCGU == null)
-                return NotFound(new { message = "Aucune CGU disponible." });
+            var currentCGUVersion = latestCGU?.Version ?? "1.0";
 
-            user.LastCGUAcceptanceDate = DateTime.UtcNow;
-            await _userRepository.UpdateAsync(user);
+            var profile = _mapper.Map<UserProfileDto>(user);
+            profile.RequiresCGUAcceptance = UserHelper.RequiresCGUAcceptance(user, currentCGUVersion); // ✅ Utilise helper
+
+            return Ok(profile);
+        }
+
+        // GET: api/user/cgu-status
+        [HttpGet("cgu-status")]
+        public async Task<IActionResult> GetCGUStatus()
+        {
+            var userIdFromToken = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+
+            var user = await _userRepository.GetByIdAsync(userIdFromToken);
+            if (user == null)
+                return NotFound(new { message = "Utilisateur introuvable." });
+
+            var latestCGU = await _cguRepository.GetLatestVersionAsync();
+            var currentCGUVersion = latestCGU?.Version ?? "1.0";
+
+            var status = UserHelper.BuildCGUStatus(user, currentCGUVersion); // ✅ Utilise helper
+
+            return Ok(status);
+        }
+
+        // GET: api/user/with-cgu/{id}
+        [HttpGet("with-cgu/{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetUserWithCGU(int id)
+        {
+            var user = await _userRepository.GetUserWithCGUAsync(id);
+            if (user == null)
+                return NotFound();
 
             return Ok(new
             {
-                message = "CGU acceptée.",
-                acceptedAt = user.LastCGUAcceptanceDate,
-                cguVersion = latestCGU.Version
+                user.Id,
+                user.Email,
+                user.Nom,
+                user.Prenom,
+                user.Role,
+                user.AcceptedCGU?.Version,
+                user.AcceptedCGU?.DatePublication,
+                user.LastCGUAcceptanceDate
             });
         }
 
-        // PUT: api/user/{id}/profile
-        [HttpPut("{id}/profile")]
-        public async Task<IActionResult> UpdateProfile(int id, [FromBody] UpdateProfileRequest request)
+        // PUT: api/user/profile
+        [HttpPut("profile")]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var user = await _userRepository.GetByIdAsync(id);
+            var userIdFromToken = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+
+            var user = await _userRepository.GetByIdAsync(userIdFromToken);
             if (user == null)
                 return NotFound(new { message = "Utilisateur introuvable." });
 
-            // Mise à jour des champs Nom et Prenom
-            user.Nom = request.Nom;
-            user.Prenom = request.Prenom;
+            _mapper.Map(request, user);
 
-            // Mise à jour du mot de passe si fourni
             if (!string.IsNullOrEmpty(request.NewPassword))
             {
-                user.PasswordHash = HashPassword(request.NewPassword);
+                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
             }
 
             await _userRepository.UpdateAsync(user);
 
             return Ok(new { message = "Profil mis à jour avec succès." });
-        }
-
-        // Méthode basique de hashage (à remplacer par une vraie méthode sécurisée)
-        private string HashPassword(string password)
-        {
-            // Exemple simple, à remplacer par un vrai hashage (ex: BCrypt)
-            return Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(password));
         }
     }
 }

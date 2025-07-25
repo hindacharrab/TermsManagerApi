@@ -1,11 +1,15 @@
 using CGUManagementAPI.Data;
 using CGUManagementAPI.Repositories;
 using CGUManagementAPI.Services;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using TermsManagerAPI.Mappings;
+using TermsManagerAPI.Repositories.Interface;
+using TermsManagerAPI.Services.Interface;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,7 +21,6 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new() { Title = "CGU Management API", Version = "v1" });
-
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "Entrez le token JWT sous la forme : **Bearer {votre_token}**",
@@ -26,7 +29,6 @@ builder.Services.AddSwaggerGen(c =>
         Type = SecuritySchemeType.ApiKey,
         Scheme = "Bearer"
     });
-
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
@@ -49,6 +51,9 @@ builder.Services.AddSwaggerGen(c =>
 // Configuration DbContext SQL Server
 builder.Services.AddDbContext<CGUManagementDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// ? AJOUT D'AUTOMAPPER 
+builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 // Injection des dépendances métier
 builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -108,10 +113,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseAuthentication(); // Important: toujours avant UseAuthorization
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();

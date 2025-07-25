@@ -4,6 +4,7 @@ using CGUManagementAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace TermsManagerAPI.Migrations
 {
     [DbContext(typeof(CGUManagementDbContext))]
-    partial class CGUManagementDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250716121641_AddAcceptedCGUVersionToUser")]
+    partial class AddAcceptedCGUVersionToUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -56,9 +59,6 @@ namespace TermsManagerAPI.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("AcceptedCGUId")
-                        .HasColumnType("int");
-
                     b.Property<string>("AcceptedCGUVersion")
                         .HasColumnType("nvarchar(max)");
 
@@ -92,22 +92,10 @@ namespace TermsManagerAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AcceptedCGUId");
-
                     b.HasIndex("Email")
                         .IsUnique();
 
                     b.ToTable("Users");
-                });
-
-            modelBuilder.Entity("CGUManagementAPI.Models.User", b =>
-                {
-                    b.HasOne("CGUManagementAPI.Models.CGU", "AcceptedCGU")
-                        .WithMany()
-                        .HasForeignKey("AcceptedCGUId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("AcceptedCGU");
                 });
 #pragma warning restore 612, 618
         }

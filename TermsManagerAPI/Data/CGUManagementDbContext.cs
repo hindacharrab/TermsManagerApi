@@ -26,10 +26,19 @@ namespace CGUManagementAPI.Data
             modelBuilder.Entity<User>()
                 .Property(u => u.Role)
                 .HasDefaultValue("User");
+            /*  ****        */
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.AcceptedCGU)
+                .WithMany()
+                .HasForeignKey(u => u.AcceptedCGUId)
+                .OnDelete(DeleteBehavior.Restrict);
+            /*  ****        */
+
 
             modelBuilder.Entity<CGU>()
                 .Property(c => c.Version)
                 .HasDefaultValue("1.0");
+
         }
     }
 }

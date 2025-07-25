@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace TermsManagerAPI.Migrations
 {
     [DbContext(typeof(CGUManagementDbContext))]
-    [Migration("20250714095342_AddLastCGUAcceptanceDateToUser")]
-    partial class AddLastCGUAcceptanceDateToUser
+    [Migration("20250716114426_NomDeLaMigrationSupprimée")]
+    partial class NomDeLaMigrationSupprimée
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -59,37 +59,38 @@ namespace TermsManagerAPI.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("AcceptedByAdmin")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("AcceptedCGUVersion")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("DateCreation")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTime?>("LastCGUAcceptanceDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Nom")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Prenom")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Role")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)")
+                        .HasColumnType("nvarchar(max)")
                         .HasDefaultValue("User");
 
                     b.HasKey("Id");

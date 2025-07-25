@@ -1,12 +1,12 @@
 ﻿using CGUManagementAPI.Models;
 
-namespace CGUManagementAPI.Services
+namespace TermsManagerAPI.Services.Interface
 {
     public interface IAuthService
     {
         Task<string> LoginAsync(string email, string password);
-        Task<bool> ValidateTokenAsync(string token);
         Task<string> GenerateJWTAsync(User user);
+        Task<bool> ValidateTokenAsync(string token);
         Task LogoutAsync();
     }
 }
